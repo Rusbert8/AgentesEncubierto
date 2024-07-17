@@ -40,6 +40,9 @@ export default function HomeScreen() {
       console.log("Incidencia insertado exitosamente.");
       limpiarCampos();
       setAlert(true);
+      setTimeout(() => {
+        setAlert(false);
+      }, 3000);
     } catch (error) {
       console.error("Error insertando evento: ", error);
     }
@@ -94,7 +97,7 @@ export default function HomeScreen() {
       <TouchableOpacity onPress={insertarIncidencia} style={styles.btn}>
         <Text style={styles.btnText}>Registrar Incidencia</Text>
       </TouchableOpacity>
-      {alert == true && <Text style={styles.alert}>Incidencia Registrado</Text>}
+      {alert == true && <Text style={styles.alert}>Incidencia Registrada</Text>}
     </View>
   );
 }
