@@ -11,17 +11,20 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
+import { Audio } from "expo-av";
 
 export default function HomeScreen() {
   const [fecha, setFecha] = useState<string>("");
   const [titulo, setTitulo] = useState<string>("");
   const [descripcion, setDescripcion] = useState<string>("");
   const [foto, setFoto] = useState<string | undefined>(undefined);
+  const [audio, setAudio] = useState<string | undefined>(undefined);
   const [incidencias, setIncidencias] = useState<any[]>([]);
   const [alert, setAlert] = useState<boolean>(false);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
   const insertarIncidencia = async () => {
-    if (!fecha || !titulo || !descripcion || !foto) {
+    if (!fecha || !titulo || !descripcion || !foto || !audio) {
       Alert.alert("Campos Vacíos", "Por favor completa todos los campos.");
       return;
     }
@@ -32,12 +35,13 @@ export default function HomeScreen() {
         titulo,
         descripcion,
         foto,
+        audio,
       };
 
       const updateEvents = [...incidencias, newEvent];
       await AsyncStorage.setItem("incidencias", JSON.stringify(updateEvents));
       setIncidencias(updateEvents);
-      console.log("Incidencia insertado exitosamente.");
+      console.log("Incidencia insertada exitosamente.");
       limpiarCampos();
       setAlert(true);
       setTimeout(() => {
@@ -61,11 +65,47 @@ export default function HomeScreen() {
     }
   }
 
+  const startRecording = async () => {
+    try {
+      console.log("Requesting permissions..");
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      console.log("Starting recording..");
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(
+        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+      );
+      await recording.startAsync();
+      setRecording(recording);
+      console.log("Recording started");
+    } catch (err) {
+      console.error("Failed to start recording", err);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (recording) {
+      console.log("Stopping recording..");
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      if (uri) {
+        setAudio(uri);
+      }
+      setRecording(null);
+      console.log("Recording stopped and stored at", uri);
+    }
+  };
+
   const limpiarCampos = () => {
     setFecha("");
     setTitulo("");
     setDescripcion("");
     setFoto(undefined);
+    setAudio(undefined);
   };
 
   return (
@@ -94,10 +134,34 @@ export default function HomeScreen() {
       <TouchableOpacity onPress={seleccionarFoto} style={styles.btnImage}>
         <Text style={styles.btnText}>Seleccionar Foto</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={recording ? stopRecording : startRecording}
+        style={styles.btn}
+      >
+        <Text style={styles.btnText}>
+          {recording ? "Detener Grabación" : "Grabar Audio"}
+        </Text>
+      </TouchableOpacity>
+
+      {audio && (
+        <TouchableOpacity
+          onPress={async () => {
+            const sound = new Audio.Sound();
+            await sound.loadAsync({ uri: audio });
+            await sound.playAsync();
+          }}
+          style={styles.btn}
+        >
+          <Text style={styles.btnText}>Reproducir Audio</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity onPress={insertarIncidencia} style={styles.btn}>
         <Text style={styles.btnText}>Registrar Incidencia</Text>
       </TouchableOpacity>
-      {alert == true && <Text style={styles.alert}>Incidencia Registrada</Text>}
+
+      {alert && <Text style={styles.alert}>Incidencia Registrada</Text>}
     </View>
   );
 }
