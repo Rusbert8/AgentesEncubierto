@@ -12,6 +12,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Audio } from "expo-av";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function HomeScreen() {
   const [fecha, setFecha] = useState<string>("");
@@ -131,33 +132,37 @@ export default function HomeScreen() {
       />
 
       {foto ? <Image source={{ uri: foto }} style={styles.image} /> : null}
-      <TouchableOpacity onPress={seleccionarFoto} style={styles.btnImage}>
+      <TouchableOpacity onPress={seleccionarFoto} style={styles.btnSecondary}>
         <Text style={styles.btnText}>Seleccionar Foto</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={recording ? stopRecording : startRecording}
-        style={styles.btn}
-      >
-        <Text style={styles.btnText}>
-          {recording ? "Detener Grabación" : "Grabar Audio"}
-        </Text>
-      </TouchableOpacity>
-
-      {audio && (
+      <View style={styles.audioContainer}>
         <TouchableOpacity
-          onPress={async () => {
-            const sound = new Audio.Sound();
-            await sound.loadAsync({ uri: audio });
-            await sound.playAsync();
-          }}
-          style={styles.btn}
+          onPress={recording ? stopRecording : startRecording}
+          style={styles.btnSecondary}
         >
-          <Text style={styles.btnText}>Reproducir Audio</Text>
+          <Text style={styles.btnText}>
+            {recording ? "Detener Grabación" : "Grabar Audio"}
+          </Text>
         </TouchableOpacity>
-      )}
 
-      <TouchableOpacity onPress={insertarIncidencia} style={styles.btn}>
+        {audio && (
+          <TouchableOpacity
+            onPress={async () => {
+              const sound = new Audio.Sound();
+              await sound.loadAsync({ uri: audio });
+              await sound.playAsync();
+            }}
+            style={styles.btnAudioPlay}
+          >
+            <Text style={styles.btnText}>
+              <Ionicons name={"play-circle-outline"} size={28} />
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <TouchableOpacity onPress={insertarIncidencia} style={styles.btnPrimary}>
         <Text style={styles.btnText}>Registrar Incidencia</Text>
       </TouchableOpacity>
 
@@ -172,6 +177,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
+  },
+  audioContainer: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 30,
   },
   title: {
     fontWeight: "bold",
@@ -194,19 +206,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingTop: 10,
   },
-  btn: {
+  btnPrimary: {
     backgroundColor: "#2f6682",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
     marginTop: 10,
   },
-  btnImage: {
+  btnSecondary: {
     backgroundColor: "#676a6e",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
     marginTop: 10,
+  },
+  btnAudioPlay: {
+    backgroundColor: "#b33030",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+    marginTop: 10,
+    marginLeft: 15,
   },
   btnText: {
     color: "white",
