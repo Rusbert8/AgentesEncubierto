@@ -1,3 +1,4 @@
+// Rusbert Antonelly Sánchez Rosario (2022-0323)
 import { View, Text, StyleSheet, Image } from "react-native";
 
 export default function Contratame() {

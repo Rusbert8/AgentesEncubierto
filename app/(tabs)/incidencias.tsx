@@ -1,4 +1,3 @@
-// Rusbert Antonelly Sánchez Rosario (2022-0323)
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
@@ -10,6 +9,8 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
+import { Audio } from "expo-av"; // Importar expo-av para la reproducción de audio
+import { Ionicons } from "@expo/vector-icons";
 
 interface IIncidencia {
   id: number;
@@ -17,12 +18,16 @@ interface IIncidencia {
   descripcion: string;
   fecha: string;
   foto: string;
+  audio: string; // Añadir audio a la interfaz de incidencia
 }
 
 export default function Incidencias() {
   const [incidencias, setIncidencias] = useState<IIncidencia[]>([]);
   const [incidenciaSeleccionada, setIncidenciaSeleccionada] =
     useState<IIncidencia | null>(null);
+  const [audioSeleccionado, setAudioSeleccionado] = useState<string | null>(
+    null
+  ); // Estado para el audio seleccionado
 
   useEffect(() => {
     obtenerIncidencias();
@@ -38,6 +43,17 @@ export default function Incidencias() {
       }
     } catch (e) {
       console.error("Error obteniendo incidencias:", e);
+    }
+  };
+
+  const reproducirAudio = async (audioUri: string) => {
+    try {
+      const soundObject = new Audio.Sound();
+      await soundObject.loadAsync({ uri: audioUri });
+      await soundObject.playAsync();
+      // Puedes añadir lógica adicional aquí, como detener el audio o controlar el volumen
+    } catch (error) {
+      console.error("Error al reproducir el audio:", error);
     }
   };
 
@@ -78,11 +94,27 @@ export default function Incidencias() {
                 <Text style={styles.modalDescription}>
                   {incidenciaSeleccionada.descripcion}
                 </Text>
+                {/* Botón para reproducir audio */}
+                {incidenciaSeleccionada.audio && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      reproducirAudio(incidenciaSeleccionada.audio)
+                    }
+                    style={styles.btnAudioPlay}
+                  >
+                    <Text style={styles.btnText}>
+                      <Ionicons name={"play-circle-outline"} size={28} />
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
-                  onPress={() => setIncidenciaSeleccionada(null)}
+                  onPress={() => {
+                    setIncidenciaSeleccionada(null);
+                    setAudioSeleccionado(null);
+                  }}
                   style={styles.closeButton}
                 >
-                  <Text style={styles.closeButtonText}>Cerrar</Text>
+                  <Text style={styles.btnText}>Cerrar</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -186,8 +218,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: 10,
   },
-  closeButtonText: {
+  btnText: {
     color: "white",
     fontSize: 18,
+  },
+  btnAudioPlay: {
+    backgroundColor: "#b33030",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+    marginTop: 10,
   },
 });
