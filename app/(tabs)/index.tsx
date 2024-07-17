@@ -17,10 +17,14 @@ export default function HomeScreen() {
   const [titulo, setTitulo] = useState<string>("");
   const [descripcion, setDescripcion] = useState<string>("");
   const [foto, setFoto] = useState<string | undefined>(undefined);
-  const [eventos, setEventos] = useState<any[]>([]);
+  const [incidencias, setIncidencias] = useState<any[]>([]);
   const [alert, setAlert] = useState<boolean>(false);
 
-  const insertarEvento = async () => {
+  const insertarIncidencia = async () => {
+    if (!fecha || !titulo || !descripcion || !foto) {
+      Alert.alert("Campos Vacíos", "Por favor completa todos los campos.");
+      return;
+    }
     try {
       const newEvent = {
         id: Date.now().toString(),
@@ -30,10 +34,10 @@ export default function HomeScreen() {
         foto,
       };
 
-      const updateEvents = [...eventos, newEvent];
-      await AsyncStorage.setItem("eventos", JSON.stringify(updateEvents));
-      setEventos(updateEvents);
-      console.log("Evento insertado exitosamente.");
+      const updateEvents = [...incidencias, newEvent];
+      await AsyncStorage.setItem("incidencias", JSON.stringify(updateEvents));
+      setIncidencias(updateEvents);
+      console.log("Incidencia insertado exitosamente.");
       limpiarCampos();
       setAlert(true);
     } catch (error) {
@@ -63,18 +67,18 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Registro de Eventos</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Fecha"
-        value={fecha}
-        onChangeText={setFecha}
-      />
+      <Text style={styles.title}>Registro de Incidencias</Text>
       <TextInput
         style={styles.input}
         placeholder="Titulo"
         value={titulo}
         onChangeText={setTitulo}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Fecha"
+        value={fecha}
+        onChangeText={setFecha}
       />
       <TextInput
         style={styles.input}
@@ -87,10 +91,10 @@ export default function HomeScreen() {
       <TouchableOpacity onPress={seleccionarFoto} style={styles.btnImage}>
         <Text style={styles.btnText}>Seleccionar Foto</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={insertarEvento} style={styles.btn}>
-        <Text style={styles.btnText}>Registrar Evento</Text>
+      <TouchableOpacity onPress={insertarIncidencia} style={styles.btn}>
+        <Text style={styles.btnText}>Registrar Incidencia</Text>
       </TouchableOpacity>
-      {alert == true && <Text style={styles.alert}>Evento Registrado</Text>}
+      {alert == true && <Text style={styles.alert}>Incidencia Registrado</Text>}
     </View>
   );
 }
