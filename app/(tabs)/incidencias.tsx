@@ -8,8 +8,9 @@ import {
   Image,
   Modal,
   ScrollView,
+  Alert,
 } from "react-native";
-import { Audio } from "expo-av"; // Importar expo-av para la reproducción de audio
+import { Audio } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 
 interface IIncidencia {
@@ -18,7 +19,7 @@ interface IIncidencia {
   descripcion: string;
   fecha: string;
   foto: string;
-  audio: string; // Añadir audio a la interfaz de incidencia
+  audio: string;
 }
 
 export default function Incidencias() {
@@ -27,7 +28,9 @@ export default function Incidencias() {
     useState<IIncidencia | null>(null);
   const [audioSeleccionado, setAudioSeleccionado] = useState<string | null>(
     null
-  ); // Estado para el audio seleccionado
+  );
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false); // Estado para controlar la visibilidad del modal de confirmación
 
   useEffect(() => {
     obtenerIncidencias();
@@ -37,9 +40,12 @@ export default function Incidencias() {
     try {
       const incidenciasJson = await AsyncStorage.getItem("incidencias");
       if (incidenciasJson != null) {
-        setIncidencias(JSON.parse(incidenciasJson));
+        const parsedIncidencias: IIncidencia[] = JSON.parse(incidenciasJson);
+        setIncidencias(parsedIncidencias);
+        setShowDeleteButton(parsedIncidencias.length > 0);
       } else {
         setIncidencias([]);
+        setShowDeleteButton(false);
       }
     } catch (e) {
       console.error("Error obteniendo incidencias:", e);
@@ -51,10 +57,25 @@ export default function Incidencias() {
       const soundObject = new Audio.Sound();
       await soundObject.loadAsync({ uri: audioUri });
       await soundObject.playAsync();
-      // Puedes añadir lógica adicional aquí, como detener el audio o controlar el volumen
     } catch (error) {
       console.error("Error al reproducir el audio:", error);
     }
+  };
+
+  const confirmarBorrarTodasLasIncidencias = async () => {
+    try {
+      await AsyncStorage.removeItem("incidencias");
+      setIncidencias([]);
+      setShowDeleteButton(false);
+      setShowConfirmModal(false); // Ocultar el modal de confirmación después de borrar las incidencias
+      console.log("Todas las incidencias han sido borradas.");
+    } catch (error) {
+      console.error("Error al borrar las incidencias:", error);
+    }
+  };
+
+  const handleBorrarTodasLasIncidencias = () => {
+    setShowConfirmModal(true); // Mostrar el modal de confirmación al presionar el botón
   };
 
   return (
@@ -94,7 +115,6 @@ export default function Incidencias() {
                 <Text style={styles.modalDescription}>
                   {incidenciaSeleccionada.descripcion}
                 </Text>
-                {/* Botón para reproducir audio */}
                 {incidenciaSeleccionada.audio && (
                   <TouchableOpacity
                     onPress={() =>
@@ -112,7 +132,7 @@ export default function Incidencias() {
                     setIncidenciaSeleccionada(null);
                     setAudioSeleccionado(null);
                   }}
-                  style={styles.closeButton}
+                  style={styles.btnPrimary}
                 >
                   <Text style={styles.btnText}>Cerrar</Text>
                 </TouchableOpacity>
@@ -120,6 +140,45 @@ export default function Incidencias() {
             </View>
           </Modal>
         )}
+
+        {showDeleteButton && (
+          <TouchableOpacity
+            onPress={handleBorrarTodasLasIncidencias}
+            style={styles.deleteButton}
+          >
+            <Text style={styles.btnText}>Borrar Todas las Incidencias</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Modal de confirmación */}
+        <Modal
+          visible={showConfirmModal}
+          animationType="slide"
+          transparent={true}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirmar Acción</Text>
+              <Text style={styles.modalDescription}>
+                ¿Estás seguro de que deseas borrar todas las incidencias?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  onPress={confirmarBorrarTodasLasIncidencias}
+                  style={styles.btnPrimary}
+                >
+                  <Text style={styles.btnText}>Confirmar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowConfirmModal(false)}
+                  style={styles.closeButton}
+                >
+                  <Text style={styles.btnText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </ScrollView>
   );
@@ -212,6 +271,19 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   closeButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,
+    backgroundColor: "#b33030",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 20,
+  },
+  btnPrimary: {
     backgroundColor: "#2f6682",
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -228,5 +300,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 100,
     marginTop: 10,
+  },
+  deleteButton: {
+    backgroundColor: "#b33030",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginVertical: 20,
+    alignSelf: "center",
   },
 });
